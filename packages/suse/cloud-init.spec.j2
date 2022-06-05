@@ -34,6 +34,10 @@ URL:            http://launchpad.net/cloud-init
 Source:         {{ archive_name }}
 Source1:        rsyslog-cloud-init.cfg
 Patch1:         datasourceLocalDisk.patch
+# FIXME (lp#1812117)
+Patch2:        cloud-init-break-resolv-symlink.patch
+# FIXME no proposed solution
+Patch3:        cloud-init-sysconf-path.patch
 
 {% for r in buildrequires -%}
     BuildRequires:        {{ r }}
@@ -92,6 +96,8 @@ Documentation and examples for cloud-init tools
 %prep
 %setup -q
 %patch1 -p0
+%patch2
+%patch3
 
 # patch in the full version to version.py
 version_pys=$(find . -name version.py -type f)

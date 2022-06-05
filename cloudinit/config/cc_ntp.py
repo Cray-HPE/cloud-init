@@ -8,6 +8,7 @@
 
 import copy
 import os
+import socket
 from textwrap import dedent
 
 from cloudinit import log as logging
@@ -22,113 +23,110 @@ from cloudinit.settings import PER_INSTANCE
 LOG = logging.getLogger(__name__)
 
 frequency = PER_INSTANCE
-NTP_CONF = '/etc/ntp.conf'
+NTP_CONF = "/etc/ntp.conf"
 NR_POOL_SERVERS = 4
 distros = ['almalinux', 'alpine', 'centos', 'cloudlinux', 'debian',
            'eurolinux', 'fedora', 'openEuler', 'opensuse', 'photon',
            'rhel', 'rocky', 'sles', 'ubuntu', 'virtuozzo']
 
 NTP_CLIENT_CONFIG = {
-    'chrony': {
-        'check_exe': 'chronyd',
-        'confpath': '/etc/chrony.conf',
-        'packages': ['chrony'],
-        'service_name': 'chrony',
-        'template_name': 'chrony.conf.{distro}',
-        'template': None,
+    "chrony": {
+        "check_exe": "chronyd",
+        "confpath": "/etc/chrony.conf",
+        "packages": ["chrony"],
+        "service_name": "chrony",
+        "template_name": "chrony.conf.{distro}",
+        "template": None,
     },
-    'ntp': {
-        'check_exe': 'ntpd',
-        'confpath': NTP_CONF,
-        'packages': ['ntp'],
-        'service_name': 'ntp',
-        'template_name': 'ntp.conf.{distro}',
-        'template': None,
+    "ntp": {
+        "check_exe": "ntpd",
+        "confpath": NTP_CONF,
+        "packages": ["ntp"],
+        "service_name": "ntp",
+        "template_name": "ntp.conf.{distro}",
+        "template": None,
     },
-    'ntpdate': {
-        'check_exe': 'ntpdate',
-        'confpath': NTP_CONF,
-        'packages': ['ntpdate'],
-        'service_name': 'ntpdate',
-        'template_name': 'ntp.conf.{distro}',
-        'template': None,
+    "ntpdate": {
+        "check_exe": "ntpdate",
+        "confpath": NTP_CONF,
+        "packages": ["ntpdate"],
+        "service_name": "ntpdate",
+        "template_name": "ntp.conf.{distro}",
+        "template": None,
     },
-    'systemd-timesyncd': {
-        'check_exe': '/lib/systemd/systemd-timesyncd',
-        'confpath': '/etc/systemd/timesyncd.conf.d/cloud-init.conf',
-        'packages': [],
-        'service_name': 'systemd-timesyncd',
-        'template_name': 'timesyncd.conf',
-        'template': None,
+    "systemd-timesyncd": {
+        "check_exe": "/lib/systemd/systemd-timesyncd",
+        "confpath": "/etc/systemd/timesyncd.conf.d/cloud-init.conf",
+        "packages": [],
+        "service_name": "systemd-timesyncd",
+        "template_name": "timesyncd.conf",
+        "template": None,
     },
 }
 
 # This is Distro-specific configuration overrides of the base config
 DISTRO_CLIENT_CONFIG = {
-    'alpine': {
-        'chrony': {
-            'confpath': '/etc/chrony/chrony.conf',
-            'service_name': 'chronyd',
+    "alpine": {
+        "chrony": {
+            "confpath": "/etc/chrony/chrony.conf",
+            "service_name": "chronyd",
         },
-        'ntp': {
-            'confpath': '/etc/ntp.conf',
-            'packages': [],
-            'service_name': 'ntpd',
-        },
-    },
-    'debian': {
-        'chrony': {
-            'confpath': '/etc/chrony/chrony.conf',
+        "ntp": {
+            "confpath": "/etc/ntp.conf",
+            "packages": [],
+            "service_name": "ntpd",
         },
     },
-    'opensuse': {
-        'chrony': {
-            'service_name': 'chronyd',
-        },
-        'ntp': {
-            'confpath': '/etc/ntp.conf',
-            'service_name': 'ntpd',
-        },
-        'systemd-timesyncd': {
-            'check_exe': '/usr/lib/systemd/systemd-timesyncd',
+    "debian": {
+        "chrony": {
+            "confpath": "/etc/chrony/chrony.conf",
         },
     },
-    'photon': {
-        'chrony': {
-            'service_name': 'chronyd',
+    "opensuse": {
+        "chrony": {
+            "service_name": "chronyd",
         },
-        'ntp': {
-            'service_name': 'ntpd',
-            'confpath': '/etc/ntp.conf'
+        "ntp": {
+            "confpath": "/etc/ntp.conf",
+            "service_name": "ntpd",
         },
-        'systemd-timesyncd': {
-            'check_exe': '/usr/lib/systemd/systemd-timesyncd',
-            'confpath': '/etc/systemd/timesyncd.conf',
-        },
-    },
-    'rhel': {
-        'ntp': {
-            'service_name': 'ntpd',
-        },
-        'chrony': {
-            'service_name': 'chronyd',
+        "systemd-timesyncd": {
+            "check_exe": "/usr/lib/systemd/systemd-timesyncd",
         },
     },
-    'sles': {
-        'chrony': {
-            'service_name': 'chronyd',
+    "photon": {
+        "chrony": {
+            "service_name": "chronyd",
         },
-        'ntp': {
-            'confpath': '/etc/ntp.conf',
-            'service_name': 'ntpd',
-        },
-        'systemd-timesyncd': {
-            'check_exe': '/usr/lib/systemd/systemd-timesyncd',
+        "ntp": {"service_name": "ntpd", "confpath": "/etc/ntp.conf"},
+        "systemd-timesyncd": {
+            "check_exe": "/usr/lib/systemd/systemd-timesyncd",
+            "confpath": "/etc/systemd/timesyncd.conf",
         },
     },
-    'ubuntu': {
-        'chrony': {
-            'confpath': '/etc/chrony/chrony.conf',
+    "rhel": {
+        "ntp": {
+            "service_name": "ntpd",
+        },
+        "chrony": {
+            "service_name": "chronyd",
+        },
+    },
+    "sles": {
+        "chrony": {
+            "service_name": "chronyd",
+        },
+        "ntp": {
+            "confpath": "/etc/ntp.conf",
+            "service_name": "ntpd",
+        },
+        "systemd-timesyncd": {
+            "check_exe": "/usr/lib/systemd/systemd-timesyncd",
+        },
+    },
+    "ubuntu": {
+        "chrony": {
+            "confpath": "/etc/chrony/chrony.conf",
         },
     },
 }
@@ -222,6 +220,27 @@ schema = {
                         empty, 4 default pool servers will be provided with
                         the format ``{0-3}.{distro}.pool.ntp.org``.""")
                 },
+                'allow': {
+                    'type': 'array',
+                    'items': {
+                        'type': 'string',
+                        'format': 'network/CIDR'
+                    },
+                    'uniqueItems': True,
+                    'description': dedent("""\
+                        List of allowed networks. Networks should use
+                         CIDR format ``10.x.x.x/XX``.""")
+                },
+                'peers': {
+                    'type': 'array',
+                    'items': {
+                        'type': 'string',
+                        'format': 'hostname'
+                    },
+                    'uniqueItems': True,
+                    'description': dedent("""\
+                        List of peers. Hostnames or IPs.""")
+                },
                 'ntp_client': {
                     'type': 'string',
                     'default': 'auto',
@@ -240,6 +259,13 @@ schema = {
                         Attempt to enable ntp clients if set to True.  If set
                         to False, ntp client will not be configured or
                         installed"""),
+                },
+                'local_hostname': {
+                    'type': 'string',
+                    'default': socket.gethostname(),
+                    'description': dedent("""\
+                        Sets a variable, which is only used during
+                        jinja templating"""),
                 },
                 'config': {
                     'description': dedent("""\
@@ -299,8 +325,9 @@ schema = {
         }
     }
 }
-REQUIRED_NTP_CONFIG_KEYS = frozenset([
-    'check_exe', 'confpath', 'packages', 'service_name'])
+REQUIRED_NTP_CONFIG_KEYS = frozenset(
+    ["check_exe", "confpath", "packages", "service_name"]
+)
 
 
 __doc__ = get_schema_doc(schema)  # Supplement python help()
@@ -333,33 +360,49 @@ def select_ntp_client(ntp_client, distro):
     distro_cfg = distro_ntp_client_configs(distro.name)
 
     # user specified client, return its config
-    if ntp_client and ntp_client != 'auto':
-        LOG.debug('Selected NTP client "%s" via user-data configuration',
-                  ntp_client)
+    if ntp_client and ntp_client != "auto":
+        LOG.debug(
+            'Selected NTP client "%s" via user-data configuration', ntp_client
+        )
         return distro_cfg.get(ntp_client, {})
 
     # default to auto if unset in distro
-    distro_ntp_client = distro.get_option('ntp_client', 'auto')
+    distro_ntp_client = distro.get_option("ntp_client", "auto")
 
     clientcfg = {}
     if distro_ntp_client == "auto":
         for client in distro.preferred_ntp_clients:
             cfg = distro_cfg.get(client)
-            if subp.which(cfg.get('check_exe')):
-                LOG.debug('Selected NTP client "%s", already installed',
-                          client)
-                clientcfg = cfg
-                break
+            try:
+                if subp.which(cfg.get('check_exe')):
+                    LOG.debug(
+                        'Selected NTP client "%s", already installed',
+                        client,
+                    )
+                    clientcfg = cfg
+                    break
+            # backwards compatibility for older versions of csm
+            except AttributeError:
+                if util.which(cfg.get('check_exe')):
+                    LOG.debug(
+                        'Selected NTP client "%s", already installed',
+                        client,
+                    )
+                    clientcfg = cfg
+                    break
 
         if not clientcfg:
             client = distro.preferred_ntp_clients[0]
             LOG.debug(
                 'Selected distro preferred NTP client "%s", not yet installed',
-                client)
+                client,
+            )
             clientcfg = distro_cfg.get(client)
     else:
-        LOG.debug('Selected NTP client "%s" via distro system config',
-                  distro_ntp_client)
+        LOG.debug(
+            'Selected NTP client "%s" via distro system config',
+            distro_ntp_client,
+        )
         clientcfg = distro_cfg.get(distro_ntp_client, {})
 
     return clientcfg
@@ -374,11 +417,17 @@ def install_ntp_client(install_func, packages=None, check_exe="ntpd"):
     @param check_exe: string.  The name of a binary that indicates the package
     the specified package is already installed.
     """
-    if subp.which(check_exe):
-        return
-    if packages is None:
-        packages = ['ntp']
-
+    try:
+        if subp.which(check_exe):
+            return
+        if packages is None:
+            packages = ["ntp"]
+    # backwards compatibility for older versions of csm
+    except AttributeError:
+        if util.which(check_exe):
+            return
+        if packages is None:
+            packages = ["ntp"]
     install_func(packages)
 
 
@@ -402,33 +451,50 @@ def generate_server_names(distro):
     names = []
     pool_distro = distro
 
-    if distro == 'sles':
+    if distro == "sles":
         # For legal reasons x.pool.sles.ntp.org does not exist,
         # use the opensuse pool
-        pool_distro = 'opensuse'
-    elif distro == 'alpine' or distro == 'eurolinux':
+        pool_distro = "opensuse"
+    elif distro == "alpine" or distro == "eurolinux":
         # Alpine-specific pool (i.e. x.alpine.pool.ntp.org) does not exist
         # so use general x.pool.ntp.org instead. The same applies to EuroLinux
-        pool_distro = ''
+        pool_distro = ""
 
     for x in range(0, NR_POOL_SERVERS):
-        names.append(".".join(
-            [n for n in [str(x)] + [pool_distro] + ['pool.ntp.org'] if n]))
+        names.append(
+            ".".join(
+                [n for n in [str(x)] + [pool_distro] + ["pool.ntp.org"] if n]
+            )
+        )
 
     return names
 
 
-def write_ntp_config_template(distro_name, service_name=None, servers=None,
-                              pools=None, path=None, template_fn=None,
-                              template=None):
+def write_ntp_config_template(
+    distro_name,
+    local_hostname=None,
+    service_name=None,
+    servers=None,
+    pools=None,
+    allow=None,
+    peers=None,
+    path=None,
+    template_fn=None,
+    template=None,
+):
     """Render a ntp client configuration for the specified client.
 
     @param distro_name: string.  The distro class name.
+    @param local_hostname: string. Generated automatically from the hostname.
     @param service_name: string. The name of the NTP client service.
     @param servers: A list of strings specifying ntp servers. Defaults to empty
     list.
     @param pools: A list of strings specifying ntp pools. Defaults to empty
     list.
+    @param allow: A list of strings specifying a network/CIDR. Defaults to
+    empty list.
+    @param peers: A list nodes that should peer with each other. Defaults to
+    empty list.
     @param path: A string to specify where to write the rendered template.
     @param template_fn: A string to specify the template source file.
     @param template: A string specifying the contents of the template. This
@@ -438,32 +504,56 @@ def write_ntp_config_template(distro_name, service_name=None, servers=None,
     @raises: ValueError when path is None.
     @raises: ValueError when template_fn is None and template is None.
     """
+    if not local_hostname:
+        local_hostname = socket.gethostname()
     if not servers:
         servers = []
     if not pools:
         pools = []
+    if not allow:
+        allow = []
+    if not peers:
+        peers = []
 
-    if (len(servers) == 0 and distro_name == 'alpine' and
-            service_name == 'ntpd'):
+    if (
+        len(servers) == 0
+        and distro_name == "alpine"
+        and service_name == "ntpd"
+    ):
         # Alpine's Busybox ntpd only understands "servers" configuration
         # and not "pool" configuration.
         servers = generate_server_names(distro_name)
-        LOG.debug(
-            'Adding distro default ntp servers: %s', ','.join(servers))
+        LOG.debug("Adding distro default ntp servers: %s", ",".join(servers))
     elif len(servers) == 0 and len(pools) == 0:
         pools = generate_server_names(distro_name)
         LOG.debug(
-            'Adding distro default ntp pool servers: %s', ','.join(pools))
+            "Adding distro default ntp pool servers: %s", ",".join(pools)
+        )
 
     if not path:
-        raise ValueError('Invalid value for path parameter')
+        raise ValueError("Invalid value for path parameter")
+
+    # if template is provided, use it, otherwise use template_name
+    local_template = "/etc/cloud/templates/chrony.conf.cray.tmpl"
+
+    if os.path.exists(local_template):
+        LOG.debug(
+            "Using local template %s", local_template)
+        template_fn = local_template
+        template_override = open(local_template, "r")
+        # read file to a string
+        data = template_override.read()
+        template_override.close()
+        # set the template to the content in the file
+        template = data
 
     if not template_fn and not template:
-        raise ValueError('Not template_fn or template provided')
+        raise ValueError("Not template_fn or template provided")
 
-    params = {'servers': servers, 'pools': pools}
+    params = {'local_hostname': local_hostname, 'servers': servers,
+              'pools': pools, 'allow': allow, 'peers': peers}
     if template:
-        tfile = temp_utils.mkstemp(prefix='template_name-', suffix=".tmpl")
+        tfile = temp_utils.mkstemp(prefix="template_name-", suffix=".tmpl")
         template_fn = tfile[1]  # filepath is second item in tuple
         util.write_file(template_fn, content=template)
 
@@ -471,6 +561,25 @@ def write_ntp_config_template(distro_name, service_name=None, servers=None,
     # clean up temporary template
     if template:
         util.del_file(template_fn)
+
+
+def reload_ntp(service, systemd=False):
+    """Restart or reload an ntp system service.
+
+    @param service: A string specifying the name of the service to be affected.
+    @param systemd: A boolean indicating if the distro uses systemd, defaults
+    to False.
+    @returns: A tuple of stdout, stderr results from executing the action.
+    """
+    if systemd:
+        cmd = ['systemctl', 'reload-or-restart', service]
+    else:
+        cmd = ['service', service, 'restart']
+    try:
+        subp.subp(cmd, capture=True)
+    # backwards compatibility for older versions of csm
+    except AttributeError:
+        util.subp(cmd, capture=True)
 
 
 def supplemental_schema_validation(ntp_config):
@@ -486,50 +595,62 @@ def supplemental_schema_validation(ntp_config):
     errors = []
     missing = REQUIRED_NTP_CONFIG_KEYS.difference(set(ntp_config.keys()))
     if missing:
-        keys = ', '.join(sorted(missing))
+        keys = ", ".join(sorted(missing))
         errors.append(
-            'Missing required ntp:config keys: {keys}'.format(keys=keys))
-    elif not any([ntp_config.get('template'),
-                  ntp_config.get('template_name')]):
+            "Missing required ntp:config keys: {keys}".format(keys=keys)
+        )
+    elif not any(
+        [ntp_config.get("template"), ntp_config.get("template_name")]
+    ):
         errors.append(
-            'Either ntp:config:template or ntp:config:template_name values'
-            ' are required')
+            "Either ntp:config:template or ntp:config:template_name values"
+            " are required"
+        )
     for key, value in sorted(ntp_config.items()):
-        keypath = 'ntp:config:' + key
-        if key == 'confpath':
+        keypath = "ntp:config:" + key
+        if key == "confpath":
             if not all([value, isinstance(value, str)]):
                 errors.append(
-                    'Expected a config file path {keypath}.'
-                    ' Found ({value})'.format(keypath=keypath, value=value))
-        elif key == 'packages':
+                    "Expected a config file path {keypath}."
+                    " Found ({value})".format(keypath=keypath, value=value)
+                )
+        elif key == "packages":
             if not isinstance(value, list):
                 errors.append(
-                    'Expected a list of required package names for {keypath}.'
-                    ' Found ({value})'.format(keypath=keypath, value=value))
-        elif key in ('template', 'template_name'):
+                    "Expected a list of required package names for {keypath}."
+                    " Found ({value})".format(keypath=keypath, value=value)
+                )
+        elif key in ("template", "template_name"):
             if value is None:  # Either template or template_name can be none
                 continue
             if not isinstance(value, str):
                 errors.append(
-                    'Expected a string type for {keypath}.'
-                    ' Found ({value})'.format(keypath=keypath, value=value))
+                    "Expected a string type for {keypath}."
+                    " Found ({value})".format(keypath=keypath, value=value)
+                )
         elif not isinstance(value, str):
             errors.append(
-                'Expected a string type for {keypath}.'
-                ' Found ({value})'.format(keypath=keypath, value=value))
+                "Expected a string type for {keypath}. Found ({value})".format(
+                    keypath=keypath, value=value
+                )
+            )
 
     if errors:
-        raise ValueError(r'Invalid ntp configuration:\n{errors}'.format(
-            errors='\n'.join(errors)))
+        raise ValueError(
+            r"Invalid ntp configuration:\n{errors}".format(
+                errors="\n".join(errors)
+            )
+        )
 
 
 def handle(name, cfg, cloud, log, _args):
     """Enable and configure ntp."""
-    if 'ntp' not in cfg:
+    if "ntp" not in cfg:
         LOG.debug(
-            "Skipping module named %s, not present or disabled by cfg", name)
+            "Skipping module named %s, not present or disabled by cfg", name
+        )
         return
-    ntp_cfg = cfg['ntp']
+    ntp_cfg = cfg["ntp"]
     if ntp_cfg is None:
         ntp_cfg = {}  # Allow empty config which will install the package
 
@@ -537,52 +658,85 @@ def handle(name, cfg, cloud, log, _args):
     if not isinstance(ntp_cfg, (dict)):
         raise RuntimeError(
             "'ntp' key existed in config, but not a dictionary type,"
-            " is a {_type} instead".format(_type=type_utils.obj_name(ntp_cfg)))
+            " is a {_type} instead".format(_type=type_utils.obj_name(ntp_cfg))
+        )
 
     validate_cloudconfig_schema(cfg, schema)
 
     # Allow users to explicitly enable/disable
-    enabled = ntp_cfg.get('enabled', True)
+    enabled = ntp_cfg.get("enabled", True)
     if util.is_false(enabled):
         LOG.debug("Skipping module named %s, disabled by cfg", name)
         return
 
+    # Set the hostname to the node this is running on.
+    # This is needed for logic in the templates
+    ntp_cfg.setdefault('local_hostname', socket.gethostname())
+    local_hostname = ntp_cfg.get('local_hostname')
+
     # Select which client is going to be used and get the configuration
-    ntp_client_config = select_ntp_client(ntp_cfg.get('ntp_client'),
-                                          cloud.distro)
+    ntp_client_config = select_ntp_client(
+        ntp_cfg.get("ntp_client"), cloud.distro
+    )
     # Allow user ntp config to override distro configurations
     ntp_client_config = util.mergemanydict(
-        [ntp_client_config, ntp_cfg.get('config', {})], reverse=True)
+        [ntp_client_config, ntp_cfg.get("config", {})], reverse=True
+    )
 
     supplemental_schema_validation(ntp_client_config)
     rename_ntp_conf(confpath=ntp_client_config.get('confpath'))
 
     template_fn = None
-    if not ntp_client_config.get('template'):
-        template_name = (
-            ntp_client_config.get('template_name').replace('{distro}',
-                                                           cloud.distro.name))
+    if not ntp_client_config.get("template"):
+        template_name = ntp_client_config.get("template_name").replace(
+            "{distro}", cloud.distro.name
+        )
         template_fn = cloud.get_template_filename(template_name)
         if not template_fn:
-            msg = ('No template found, not rendering %s' %
-                   ntp_client_config.get('template_name'))
+            msg = (
+                "No template found, not rendering %s"
+                % ntp_client_config.get("template_name")
+            )
             raise RuntimeError(msg)
 
-    write_ntp_config_template(cloud.distro.name,
-                              service_name=ntp_client_config.get(
-                                  'service_name'),
-                              servers=ntp_cfg.get('servers', []),
-                              pools=ntp_cfg.get('pools', []),
-                              path=ntp_client_config.get('confpath'),
-                              template_fn=template_fn,
-                              template=ntp_client_config.get('template'))
-
-    install_ntp_client(cloud.distro.install_packages,
-                       packages=ntp_client_config['packages'],
-                       check_exe=ntp_client_config['check_exe'])
+    LOG.debug(
+        "cloud-init metadata will be used to render the template")
+    LOG.debug(
+        "local_hostname: %s", ntp_cfg.get('local_hostname', local_hostname))
+    LOG.debug(
+        "service_name: %s", ntp_client_config.get('service_name'))
+    LOG.debug(
+        "servers: %s", ntp_cfg.get('servers', []))
+    LOG.debug(
+        "pools: %s", ntp_cfg.get('pools', []))
+    LOG.debug(
+        "allow: %s", ntp_cfg.get('allow', []))
+    LOG.debug(
+        "peers: %s", ntp_cfg.get('peers', []))
+    write_ntp_config_template(
+        cloud.distro.name,
+        service_name=ntp_client_config.get("service_name"),
+        servers=ntp_cfg.get("servers", []),
+        pools=ntp_cfg.get("pools", []),
+        allow=ntp_cfg.get('allow', []),
+        peers=ntp_cfg.get('peers', []),
+        path=ntp_client_config.get("confpath"),
+        template_fn=template_fn,
+        template=ntp_client_config.get("template"),
+    )
+    install_ntp_client(
+        cloud.distro.install_packages,
+        packages=ntp_client_config["packages"],
+        check_exe=ntp_client_config["check_exe"],
+    )
     try:
-        cloud.distro.manage_service('reload',
-                                    ntp_client_config.get('service_name'))
+        cloud.distro.manage_service(
+            "reload", ntp_client_config.get("service_name")
+        )
+    # backwards compatibility for older versions of csm
+    except AttributeError:
+        reload_ntp(ntp_client_config['service_name'],
+                   systemd=cloud.distro.uses_systemd())
     except subp.ProcessExecutionError as e:
         LOG.exception("Failed to reload/start ntp service: %s", e)
         raise

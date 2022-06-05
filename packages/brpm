@@ -203,7 +203,7 @@ def main():
         shutil.move(topdir, os.getcwd())
         print("Wrote out %s package %r" % (args.distro, os.getcwd()))
     finally:
-        if workdir is not None:
+        if workdir is not None and not os.environ.get('KEEP_BUILD_DIR', False):
             shutil.rmtree(workdir)
 
     return 0
