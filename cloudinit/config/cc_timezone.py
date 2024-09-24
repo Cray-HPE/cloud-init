@@ -52,25 +52,25 @@ def handle(name: str, cfg: Config, cloud: Cloud, args: list) -> None:
     # Let the distro handle settings its timezone
     cloud.distro.set_timezone(timezone)
 
-    if timezone == 'UTC':
+    if timezone == "UTC":
         pass
     else:
-        timezone = 'LOCAL'
+        timezone = "LOCAL"
 
-    if exists('/etc/adjtime'):
-        log.debug("/etc/adjtime exists")
-        with open('/etc/adjtime', 'r') as file:
+    if exists("/etc/adjtime"):
+        LOG.debug("/etc/adjtime exists")
+        with open("/etc/adjtime", "r") as file:
             # read a list of lines into data
             content = file.readlines()
 
-        hwclock_tz = timezone + '\n'
+        hwclock_tz = timezone + "\n"
 
-        log.debug("Setting hwclock to %s", hwclock_tz)
+        LOG.debug("Setting hwclock to %s", hwclock_tz)
 
         # now change the 3rd line
         content[2] = hwclock_tz
 
         # and write everything back
-        with open('/etc/adjtime', 'w') as file:
+        with open("/etc/adjtime", "w") as file:
             file.writelines(content)
 # vi: ts=4 expandtab
