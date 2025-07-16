@@ -8,8 +8,8 @@
 
 """Timezone: Set the system timezone"""
 
-from os.path import exists
 import logging
+from os.path import exists
 
 from cloudinit import util
 from cloudinit.cloud import Cloud
@@ -73,4 +73,6 @@ def handle(name: str, cfg: Config, cloud: Cloud, args: list) -> None:
         # and write everything back
         with open("/etc/adjtime", "w") as file:
             file.writelines(content)
+
+
 # vi: ts=4 expandtab

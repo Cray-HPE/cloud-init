@@ -37,6 +37,10 @@ module = [
 ]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = ["markupsafe._speedups"]
+ignore_errors = true
+
 [tool.ruff]
 target-version = "py37"
 line-length = 79

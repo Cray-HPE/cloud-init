@@ -12,11 +12,14 @@ import socket
 from textwrap import dedent
 
 from cloudinit import log as logging
-from cloudinit import subp, temp_utils, templater, type_utils, util
+from cloudinit import subp, templater, temp_utils, type_utils, util
 from cloudinit.cloud import Cloud
 from cloudinit.config import Config
-from cloudinit.config.schema import MetaSchema, get_meta_doc
-from cloudinit.config.schema import validate_cloudconfig_schema
+from cloudinit.config.schema import (
+    get_meta_doc,
+    MetaSchema,
+    validate_cloudconfig_schema,
+)
 from cloudinit.settings import PER_INSTANCE
 
 LOG = logging.getLogger(__name__)
@@ -355,23 +358,12 @@ def select_ntp_client(ntp_client, distro):
     if distro_ntp_client == "auto":
         for client in distro.preferred_ntp_clients:
             cfg = distro_cfg.get(client)
-            try:
-                if subp.which(cfg.get("check_exe")):
-                    LOG.debug(
-                        'Selected NTP client "%s", already installed',
-                        client,
-                    )
-                    clientcfg = cfg
-                    break
-            # backwards compatibility for older versions of csm
-            except AttributeError:
-                if util.which(cfg.get("check_exe")):
-                    LOG.debug(
-                        'Selected NTP client "%s", already installed',
-                        client,
-                    )
-                    clientcfg = cfg
-                    break
+            if subp.which(cfg.get("check_exe")):
+                LOG.debug(
+                    'Selected NTP client "%s", already installed', client,
+                )
+                clientcfg = cfg
+                break
 
         if not clientcfg:
             client = distro.preferred_ntp_clients[0]
@@ -399,17 +391,10 @@ def install_ntp_client(install_func, packages=None, check_exe="ntpd"):
     @param check_exe: string.  The name of a binary that indicates the package
     the specified package is already installed.
     """
-    try:
-        if subp.which(check_exe):
-            return
-        if packages is None:
-            packages = ["ntp"]
-    # backwards compatibility for older versions of csm
-    except AttributeError:
-        if util.which(check_exe):
-            return
-        if packages is None:
-            packages = ["ntp"]
+    if subp.which(check_exe):
+        return
+    if packages is None:
+        packages = ["ntp"]
     install_func(packages)
 
 
@@ -521,8 +506,7 @@ def write_ntp_config_template(
     local_template = "/etc/cloud/templates/chrony.conf.cray.tmpl"
 
     if os.path.exists(local_template):
-        LOG.debug(
-            "Using local template %s", local_template)
+        LOG.debug("Using local template %s", local_template)
         template_fn = local_template
         template_override = open(local_template, "r")
         # read file to a string
@@ -564,11 +548,7 @@ def reload_ntp(service, systemd=False):
         cmd = ["systemctl", "reload-or-restart", service]
     else:
         cmd = ["service", service, "restart"]
-    try:
-        subp.subp(cmd, capture=True)
-    # backwards compatibility for older versions of csm
-    except AttributeError:
-        util.subp(cmd, capture=True)
+    subp.subp(cmd, capture=True)
 
 
 def supplemental_schema_validation(ntp_config):
@@ -734,8 +714,10 @@ def handle(name: str, cfg: Config, cloud: Cloud, args: list) -> None:
         )
     # backwards compatibility for older versions of csm
     except AttributeError:
-        reload_ntp(ntp_client_config["service_name"],
-                   systemd=cloud.distro.uses_systemd())
+        reload_ntp(
+            ntp_client_config["service_name"],
+            systemd=cloud.distro.uses_systemd(),
+        )
     except subp.ProcessExecutionError as e:
         LOG.exception("Failed to reload/start ntp service: %s", e)
         raise
