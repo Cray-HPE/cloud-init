@@ -18,7 +18,7 @@ jobs:
           - python-version: "3.12-dev"
             toxenv: py3
             experimental: true
-          - python-version: "3.6"
+          - python-version: "3.7"
             toxenv: lowest-supported
             experimental: false
     name: unittest / ${{ matrix.toxenv }} / python ${{matrix.python-version}}
