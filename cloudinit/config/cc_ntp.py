@@ -12,12 +12,12 @@ import socket
 from textwrap import dedent
 
 from cloudinit import log as logging
-from cloudinit import subp, templater, temp_utils, type_utils, util
+from cloudinit import subp, temp_utils, templater, type_utils, util
 from cloudinit.cloud import Cloud
 from cloudinit.config import Config
 from cloudinit.config.schema import (
-    get_meta_doc,
     MetaSchema,
+    get_meta_doc,
     validate_cloudconfig_schema,
 )
 from cloudinit.settings import PER_INSTANCE
@@ -360,7 +360,8 @@ def select_ntp_client(ntp_client, distro):
             cfg = distro_cfg.get(client)
             if subp.which(cfg.get("check_exe")):
                 LOG.debug(
-                    'Selected NTP client "%s", already installed', client,
+                    'Selected NTP client "%s", already installed',
+                    client,
                 )
                 clientcfg = cfg
                 break

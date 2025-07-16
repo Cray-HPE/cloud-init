@@ -39,7 +39,7 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = ["markupsafe._speedups"]
-ignore_errors = true
+python_version = "3.9"
 
 [tool.ruff]
 target-version = "py37"
