@@ -19,7 +19,27 @@ warn_redundant_casts = "true"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-files = [".*/markupsafe/_speedups\\.pyi$"]
+module = [
+    "apport.*",
+    "BaseHTTPServer",
+    "cloudinit.feature_overrides",
+    "configobj",
+    "debconf",
+    "httplib",
+    "jsonpatch",
+    "netifaces",
+    "paramiko.*",
+    "pip.*",
+    "pycloudlib.*",
+    "responses",
+    "serial",
+    "tests.integration_tests.user_settings",
+    "uaclient.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["markupsafe._speedups"]
 ignore_errors = true
 
 [tool.ruff]
