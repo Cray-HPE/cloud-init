@@ -12,28 +12,10 @@ line_length = 79
 skip = ["cloudinit/cmd/main.py", ".tox", "packages", "tools"]
 
 [tool.mypy]
+
 follow_imports = "silent"
 warn_unused_ignores = "true"
 warn_redundant_casts = "true"
-
-[[tool.mypy.overrides]]
-module = [
-    "apport.*",
-    "BaseHTTPServer",
-    "cloudinit.feature_overrides",
-    "configobj",
-    "debconf",
-    "httplib",
-    "jsonpatch",
-    "netifaces",
-    "paramiko.*",
-    "pip.*",
-    "pycloudlib.*",
-    "responses",
-    "serial",
-    "tests.integration_tests.user_settings",
-    "uaclient.*",
-]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
