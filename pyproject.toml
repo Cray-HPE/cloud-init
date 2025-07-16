@@ -37,7 +37,7 @@ module = [
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["markupsafe._speedups"]
+files = [".*/markupsafe/_speedups\\.pyi$"]
 ignore_errors = true
 
 [tool.ruff]
