@@ -11,3 +11,4 @@ pytest<=7.3.1
 
 packaging
 passlib
+urllib3>=2.6.3 # not directly required, pinned by Snyk to avoid a vulnerability
