@@ -535,6 +535,7 @@ def write_ntp_config_template(
         raise ValueError("Not template_fn or template provided")
 
     params = {
+        "local_hostname": local_hostname,
         "servers": servers,
         "pools": pools,
         "allow": allow,
@@ -695,6 +696,7 @@ def handle(name: str, cfg: Config, cloud: Cloud, args: list) -> None:
     LOG.debug("peers: %s", ntp_cfg.get("peers", []))
     write_ntp_config_template(
         cloud.distro.name,
+        local_hostname=local_hostname,
         service_name=ntp_client_config.get("service_name"),
         servers=ntp_cfg.get("servers", []),
         pools=ntp_cfg.get("pools", []),
